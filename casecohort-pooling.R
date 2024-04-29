@@ -42,9 +42,6 @@ pool.Rboot <- function(fam.id,ind,ccoh.pool){
 }
 
 
-#setwd('U:/My Documents/SNP vector/results/case-cohort pooling/result/')
-
-
 #' @param study_week study week number
 #' @param pool.size  pool size
 #' @param n.cpu number of CPU used in bootstrapping
