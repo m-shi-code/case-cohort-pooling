@@ -44,6 +44,9 @@ pool.Rboot <- function(fam.id,ind,ccoh.pool,cov.lst='E'){
 }
 
 
+#setwd('U:/My Documents/SNP vector/results/case-cohort pooling/result/')
+
+
 #' @param study_week study week number
 #' @param pool.size  pool size
 #' @param n.cpu number of CPU used in bootstrapping
@@ -51,6 +54,7 @@ pool.Rboot <- function(fam.id,ind,ccoh.pool,cov.lst='E'){
 #' @param subcohort.frac fraction of the subcohort of the entire cohort
 #' @param base.risk baseline risk of disease
 #' @param beta.e log odds ratio of exposure
+#' @param age.dist.sce scenario of age at enrollment
 
 
 ###############################
@@ -87,13 +91,44 @@ pool.Rboot <- function(fam.id,ind,ccoh.pool,cov.lst='E'){
   n.fu <- 15  ## number of years if followup
   dropoff.rate <- 0.02 ## dropout rate
   
+  ###### four scenarios of age at enrollment distribution #####
+  ##### age.dist.sce =1  age at enrollment has a uniform distribution
+  ##### age.dist.sce =2  age at enrollment has a Gaussian distribution
+  ##### age.dist.sce =3  age at enrollment has a Gaussian distribution and is correlated with exposure
+  ##### age.dist.sce =4  age at enrollment has a left-skewed distribution
+  
+  age.dist.sce <- 1
   
   ID <- 1:n.data
-  age.start <- sample(35:74,n.data,replace=T)
+  
+  ## uniform
+  if (age.dist.sce==1) age.start <- sample(35:74,n.data,replace=T)
+  
+  ## normal
+  if (age.dist.sce %in% c(2,3)) {
+  age.start <-round(rnorm(n.data*1.1,55.2, 9))
+  age.start<- age.start[age.start >= 35 & age.start <=74][1:n.data]
+  }
+  ## left skewed
+  if (age.dist.sce ==4) {
+ age.start <-round(exp(rnorm(n.data*1.3,log(45.2), 0.2)))
+ age.start<- age.start[age.start >= 35 & age.start <=74][1:n.data]
+ age.start <- 110-age.start
+  }
+
   E<- exp(rnorm(n.data*1.2))
   E <- E[E<= log(1/base.risk)/beta.e]
   E <- E[1:n.data]
   
+ ## Age and E correlate
+if (age.dist.sce ==3) {
+  E<- exp(rnorm(n.data*1.2))
+  E <- E[E<= log(1/base.risk)/beta.e]
+  E <- E[1:n.data]
+  E <- E+0.02*age.start
+  E[E> log(1/base.risk)/beta.e] <- log(1/base.risk)/beta.e
+  }
+ 
   sim<- data.frame(ID,age.start,age.end=age.start, E, status=rep(0,n.data))
   sim <- sim[sample(1:n.data),]
   n.fu <- 15
@@ -339,23 +374,18 @@ pool.Rboot <- function(fam.id,ind,ccoh.pool,cov.lst='E'){
     OR= paste(round(exp(coef1[1]),2)," (",round(exp(coef1[1]-1.96*est.boot1[2]),2),", ",round(exp(coef1[1]+1.96*est.boot1[2]),2),")",sep='')
     OR
 
-#------------------------------------------------------------------------------------------------------------#
+
     ###########################################################################################
-    ###########################################################################################
-    ##                                                                                       ##
-    ##                     Functions for real data analysis                                  ##
-    ##                                                                                       ##
-    ###########################################################################################
+    #
+    #    Functions for real data analysis
+    #
     ###########################################################################################
 
-#*************************************************************************************************************#
-                      
-    ############################################################
     ############################################################
     #### Function to form pools                             ####
     ############################################################
-    ############################################################
 create.pools <- function(ccoh.data,cov.lst=NA){
+
         if (sum(!(c('ID', 'age.start', 'age.end', 'status', 'subcohort') %in% colnames(ccoh.data)))>0) stop("Need the following variables in ccoh.data: ID, age.start, age.end, status, subcohort.")
   
   #######################################
@@ -492,11 +522,8 @@ create.pools <- function(ccoh.data,cov.lst=NA){
       ccoh.pool <- ccoh.pool[order(ccoh.pool$pools),]
       write.table(ccoh.pool,row.names = F,sep='\t',quote=F,file='pooled_data_for_analysis.txt')
     }
-      ############################################################
-  
-
-#*************************************************************************************************************#
-                        
+    
+    
     ############################################################
     #### Function to call logistic regression for analysis ####
     ############################################################
@@ -551,7 +578,6 @@ cch.logistic <- function(ccoh.pool,cov.lst,.boot=F, n.boot=10){
     }
     
     
-#------------------------------------------------------------------------------------------------------------#
     
 #####################################################################################
 ####  Example code to call the R function for pooled sample case-cohort analysis ####  
