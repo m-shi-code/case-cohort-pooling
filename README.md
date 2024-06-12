@@ -22,7 +22,11 @@ knitr::opts_chunk$set(
 
 Section 1 sets up the necessary R libraries.
 
-Section 2 is the code used for simulating case-cohort studies. Age at enrollment is uniformly distributed from 35 to 74 and the exposure has a log normal distribution.
+Section 2 is the code used for simulating case-cohort studies. Exposure has a log normal distribution. Age at enrollment can have four distributions as described in the paper: 
+  1) uniform between 35 and 74.
+  2) Gaussian with mean 55.2 and standard deviation 9.
+  3) same as 2) but exposure is correlted with age at enrollment.
+  4) Left skewed.  
 
 Section 3 gives the pool forming strategy. It can be used to map single samples to pools using case-cohort data (ccoh.dat).
 
@@ -64,7 +68,7 @@ The file gives mapping of individual samples to pools. For example, as shown bel
 
 If pooled exposure was measured the values can be entered in the file.
 
-Section 4 creates pools and partial pools. In addition to variables in ccoh.dat listed above there is a new variable "frac" which is the weight of each sample. For pools with reduced number of individuals due to drop out the weight will be reduced accordingly. This variables will be fed to the "weights" option in logistic regression. Note that pools of different sizes were given different ages so that they can have different stratification paramters in Section 6.
+Section 4 creates pools and partial pools. In addition to variables in ccoh.dat listed above there is a new variable "frac" which is the weight of each sample. For pools with reduced number of individuals due to drop out the weight will be reduced accordingly. This variables will be fed to the "weights" option in logistic regression. Note that pools of different sizes were given different ages so that they can have different stratification parameters in Section 6.
 
 Section 5 creates per-year format data based on the start and end of followup time.
 
